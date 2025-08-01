@@ -1,47 +1,73 @@
-//
-//  ContentView.swift
-//  StreamingAppTest
-//
-//  Created by jael ruvalcaba on 18/07/25.
-//
-
 import SwiftUI
 import CoreData
 
-struct ContentView: View {
+struct ContentView {
+    
     @Environment(\.managedObjectContext) private var viewContext
 
     @FetchRequest(
         sortDescriptors: [NSSortDescriptor(keyPath: \Item.timestamp, ascending: true)],
         animation: .default)
+    
     private var items: FetchedResults<Item>
+    
+    private let itemFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .short
+        formatter.timeStyle = .medium
+        return formatter
+    }()
+    
+}
 
+extension  ContentView: View {
+ 
     var body: some View {
         NavigationView {
-            List {
-                ForEach(items) { item in
-                    NavigationLink {
-                        Text("Item at \(item.timestamp!, formatter: itemFormatter)")
-                    } label: {
-                        Text(item.timestamp!, formatter: itemFormatter)
-                    }
-                }
-                .onDelete(perform: deleteItems)
+            VStack{
+                Text("Select an item")
+                ListView
             }
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    EditButton()
-                }
-                ToolbarItem {
-                    Button(action: addItem) {
-                        Label("Add Item", systemImage: "plus")
-                    }
+        }
+    }
+    
+    @ViewBuilder
+    private var ListView: some View {
+        List {
+            ForEach(items) { item in
+                NavigationLink {
+                    Text("Item at \(item.timestamp!, formatter: itemFormatter)")
+                } label: {
+                    Text(item.timestamp!, formatter: itemFormatter)
                 }
             }
-            Text("Select an item")
+            .onDelete(perform: deleteItems)
+        }
+        .toolbar {
+            ToolbarItems
+        }
+    }
+    
+    @ToolbarContentBuilder
+    private var ToolbarItems: some ToolbarContent {
+        
+        ToolbarItem(placement: .navigationBarTrailing) {
+            EditButton()
+        }
+        
+        ToolbarItem {
+            Button(action: addItem) {
+                Label("Add Item", systemImage: "plus")
+            }
         }
     }
 
+}
+
+// MARK: - Helper functions
+
+extension ContentView {
+    
     private func addItem() {
         withAnimation {
             let newItem = Item(context: viewContext)
@@ -74,13 +100,11 @@ struct ContentView: View {
     }
 }
 
-private let itemFormatter: DateFormatter = {
-    let formatter = DateFormatter()
-    formatter.dateStyle = .short
-    formatter.timeStyle = .medium
-    return formatter
-}()
-
 #Preview {
-    ContentView().environment(\.managedObjectContext, PersistenceController.preview.container.viewContext)
+    
+    ContentView()
+        .environment(
+            \.managedObjectContext,
+             PersistenceController.preview.container.viewContext
+        )
 }
